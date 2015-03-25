@@ -1,4 +1,4 @@
-Node Library for the Bananatag API
+Python Library for the Bananatag API
 ==================================
 
 ### Usage
