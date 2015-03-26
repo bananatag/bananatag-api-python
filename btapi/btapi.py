@@ -31,7 +31,7 @@ class BTagAPI:
 
 
     # Send request and return the results
-    def send(self, endpoint, params=None):
+    def request(self, endpoint, params=None):
         params = params or {}
         self.checkData(params)
         url = self.baseURL + endpoint
