@@ -11,20 +11,17 @@ import json
 import datetime
 import hmac
 import base64
-import time
-from pprint import pprint
 from hashlib import sha1
 
 class BTagAPI:
     # Constructor
-    def __init__(self, auth_id, access_key, debug=False):
+    def __init__(self, auth_id, access_key):
         if (auth_id is None) or (access_key is None):
             raise Exception('Error 401: You must provide both an authentication ID and access key.')
 
         self.auth_id = auth_id
         self.access_key = access_key
         self.base_url = 'https://api.bananatag.com/'
-        self.debug = debug
 
 
     # Send request and return the results
@@ -49,19 +46,8 @@ class BTagAPI:
         else:
             request = urllib2.Request(safe_url, query_string, headers=request_headers)
 
-        start = time.clock()
-        if self.debug:
-            self.log('Call to {0} {1} \n'.format(method, url))
-            pprint(params)
-
         try:
             response = urllib2.urlopen(request)
-            if self.debug:
-                self.log('\nCompleted In: {0} seconds\n'.format(str(time.clock() - start)))
-                self.log('Response Code: {0}\n'.format(str(response.getcode())))
-                self.log('Response Info: ')
-                self.log(response.info())
-
             return json.loads(response.read())
         except (urllib2.HTTPError, urllib2.URLError, httplib.HTTPException) as e:
             raise Exception('Error: {0}'.format(e))
@@ -86,11 +72,6 @@ class BTagAPI:
         if ('start' in data) and ('end' in data) and (data['start'] is not None) and (data['end'] is not None):
             if data['start'] > data['end']:
                 raise Exception('Error 400: Error with provided parameters: Start date is greater than end date.')
-
-
-    def log(self, msg):
-        if self.debug:
-            print msg
 
 
     # Generate hmac sha1 hex signature

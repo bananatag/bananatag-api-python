@@ -7,7 +7,7 @@ Python Library for the Bananatag API
 ```python
 from btapi.btapi import BTagAPI
 
-btag = BTagAPI('your AuthID', 'your Access Key', debug=False);
+btag = BTagAPI('your AuthID', 'your Access Key');
 
 params = {'start':'2013-09-01', 'end':'2013-09-25'}
 
