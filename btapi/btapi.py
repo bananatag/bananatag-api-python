@@ -13,9 +13,15 @@ import hmac
 import base64
 from hashlib import sha1
 
+
 class BTagAPI:
-    # Constructor
     def __init__(self, auth_id, access_key):
+        """
+        Bananatag API access object
+
+        :param auth_id: User's Bananatag-provided authentication ID
+        :param access_key: User's Bananatag-provided API access key
+        """
         if (auth_id is None) or (access_key is None):
             raise Exception('Error 401: You must provide both an authentication ID and access key.')
 
@@ -23,9 +29,14 @@ class BTagAPI:
         self.access_key = access_key
         self.base_url = 'https://api.bananatag.com/'
 
-
-    # Send request and return the results
     def request(self, endpoint, params=None):
+        """
+        Request method to be used by API library end user to make requests to Bananatag Data API
+
+        :param endpoint: Request endpoint
+        :param params: Dictionary of request parameters
+        :return: JSON encoded response object
+        """
         params = params or {}
         self.check_data(params)
         url = self.base_url + endpoint
@@ -34,9 +45,15 @@ class BTagAPI:
 
         return result
 
-
-    # Make request and raise any exceptions
     def make_request(self, url, method, params):
+        """
+        Makes request and returns JSON data
+
+        :param url: URL endpoint of request
+        :param method: HTTP requests method (GET, PUT)
+        :param params: Dictionary of request parameters
+        :return: JSON object with request response data
+        """
         safe_url = urllib.quote(url, ':/~')
         query_string = urllib.urlencode(params)
         request_headers = {'Authorization': base64.b64encode(self.auth_id + ':' + self.generate_signature(params))}
@@ -52,17 +69,26 @@ class BTagAPI:
         except (urllib2.HTTPError, urllib2.URLError, httplib.HTTPException) as e:
             raise Exception('Error: {0}'.format(e))
 
+    @staticmethod
+    def validate_date(date):
+        """
+        Validates that the date format is yyyy-mm-dd
 
-    # Check that date format is in yyyy-mm-dd
-    def validate_date(self, date):
+        :param date: Date string
+        :raise Exception:
+        """
         try:
             datetime.datetime.strptime(date, '%Y-%m-%d')
         except ValueError:
             raise Exception('Error 400: Error with provided parameters: Date string must be in format yyyy-mm-dd.')
 
-
-    # Validate params data and raise any exceptions before request is made
     def check_data(self, data):
+        """
+        Validate that the query parameters are within acceptable ranges
+
+        :param data: Dictionary of requests parameters
+        :raise Exception:
+        """
         if ('start' in data) and (data['start'] is not None):
             self.validate_date(data['start'])
 
@@ -73,21 +99,35 @@ class BTagAPI:
             if data['start'] > data['end']:
                 raise Exception('Error 400: Error with provided parameters: Start date is greater than end date.')
 
-
-    # Generate hmac sha1 hex signature
     def generate_signature(self, params):
-        dataString = self.build_data_string(params)
-        signature = hmac.new(self.access_key, dataString, sha1)
+        """
+        Generate HMAC SHA1 signature
+
+        :param params: Dictionary of request parameters to build signature
+        :return: String signature
+        """
+        data_string = self.build_data_string(params)
+        signature = hmac.new(self.access_key, data_string, sha1)
         return signature.hexdigest()
 
+    @staticmethod
+    def build_data_string(params):
+        """
+        URL encode request parameters
 
-    # Create data string by ordering params list by key
-    def build_data_string(self, params):
+        :param params: Dictionary of request parameters to encode
+        :return: URL encoded parameter string
+        """
         return urllib.urlencode(params)
 
+    @staticmethod
+    def get_method(endpoint):
+        """
+        Get HTTP request method based on request endpoint
 
-    # Get correct request method based on what endpoint is given
-    def get_method(self, endpoint):
+        :param endpoint: HTTP request endpoint
+        :return: Request method string
+        """
         if endpoint == '':
             return 'PUT'
         else:
