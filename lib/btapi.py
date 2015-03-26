@@ -90,9 +90,6 @@ class BTagAPI:
             if data['start'] > data['end']:
                 raise Exception('Error 400: Error with provided parameters: Start date is greater than end date.')
 
-        if ('aggregateData' in data) and (data['aggregateData'] != 'true') and (data['aggregateData'] != 'false'):
-            raise Exception('Error 400: Error with provided parameters: aggregateData must either be \'true\' or \'false\'.')
-
 
     def log(self, msg):
         if self.debug:
