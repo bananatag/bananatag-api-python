@@ -17,17 +17,14 @@ from hashlib import sha1
 
 class BTagAPI:
     # Constructor
-    def __init__(self, authID, accessKey, debug=None):
+    def __init__(self, authID, accessKey, debug=False):
         if (authID is None) or (accessKey is None):
             raise Exception('Error 401: You must provide both an authID and access key.')
 
         self.authID = authID
         self.accessKey = accessKey
         self.baseURL = 'https://api.bananatag.com/'
-        self.debug = False
-
-        if debug is not None:
-            self.debug = True
+        self.debug = debug
 
 
     # Send request and return the results
