@@ -17,39 +17,39 @@ from hashlib import sha1
 
 class BTagAPI:
     # Constructor
-    def __init__(self, authID, accessKey, debug=False):
-        if (authID is None) or (accessKey is None):
-            raise Exception('Error 401: You must provide both an authID and access key.')
+    def __init__(self, auth_id, access_key, debug=False):
+        if (auth_id is None) or (access_key is None):
+            raise Exception('Error 401: You must provide both an authentication ID and access key.')
 
-        self.authID = authID
-        self.accessKey = accessKey
-        self.baseURL = 'https://api.bananatag.com/'
+        self.auth_id = auth_id
+        self.access_key = access_key
+        self.base_url = 'https://api.bananatag.com/'
         self.debug = debug
 
 
     # Send request and return the results
     def request(self, endpoint, params=None):
         params = params or {}
-        self.checkData(params)
-        url = self.baseURL + endpoint
-        method = self.getMethod(endpoint)
-        result = self.makeRequest(url, method, params)
+        self.check_data(params)
+        url = self.base_url + endpoint
+        method = self.get_method(endpoint)
+        result = self.make_request(url, method, params)
 
         return result
 
 
     # Make request and raise any exceptions
-    def makeRequest(self, url, method, params):
+    def make_request(self, url, method, params):
         safe_url = urllib.quote(url, ':/~')
-        queryString = urllib.urlencode(params)
-        requestHeaders = {'Authorization': base64.b64encode(self.authID + ':' + self.generateSignature(params))}
+        query_string = urllib.urlencode(params)
+        request_headers = {'Authorization': base64.b64encode(self.auth_id + ':' + self.generate_signature(params))}
 
         if method == 'GET':
-            request = urllib2.Request(safe_url + '?' + queryString, headers=requestHeaders)
+            request = urllib2.Request(safe_url + '?' + query_string, headers=request_headers)
         else:
-            request = urllib2.Request(safe_url, queryString, headers=requestHeaders)
+            request = urllib2.Request(safe_url, query_string, headers=request_headers)
 
-        startTime = time.clock()
+        start = time.clock()
         if self.debug:
             self.log('Call to {0} {1} \n'.format(method, url))
             pprint(params)
@@ -57,7 +57,7 @@ class BTagAPI:
         try:
             response = urllib2.urlopen(request)
             if self.debug:
-                self.log('\nCompleted In: {0} seconds\n'.format(str(time.clock() - startTime)))
+                self.log('\nCompleted In: {0} seconds\n'.format(str(time.clock() - start)))
                 self.log('Response Code: {0}\n'.format(str(response.getcode())))
                 self.log('Response Info: ')
                 self.log(response.info())
@@ -68,7 +68,7 @@ class BTagAPI:
 
 
     # Check that date format is in yyyy-mm-dd
-    def validateDate(self, date):
+    def validate_date(self, date):
         try:
             datetime.datetime.strptime(date, '%Y-%m-%d')
         except ValueError:
@@ -76,12 +76,12 @@ class BTagAPI:
 
 
     # Validate params data and raise any exceptions before request is made
-    def checkData(self, data):
+    def check_data(self, data):
         if ('start' in data) and (data['start'] is not None):
-            self.validateDate(data['start'])
+            self.validate_date(data['start'])
 
         if ('end' in data) and (data['end'] is not None):
-            self.validateDate(data['end'])
+            self.validate_date(data['end'])
 
         if ('start' in data) and ('end' in data) and (data['start'] is not None) and (data['end'] is not None):
             if data['start'] > data['end']:
@@ -94,19 +94,19 @@ class BTagAPI:
 
 
     # Generate hmac sha1 hex signature
-    def generateSignature(self, params):
-        dataString = self.buildDataString(params)
-        signature = hmac.new(self.accessKey, dataString, sha1)
+    def generate_signature(self, params):
+        dataString = self.build_data_string(params)
+        signature = hmac.new(self.access_key, dataString, sha1)
         return signature.hexdigest()
 
 
     # Create data string by ordering params list by key
-    def buildDataString(self, params):
+    def build_data_string(self, params):
         return urllib.urlencode(params)
 
 
     # Get correct request method based on what endpoint is given
-    def getMethod(self, endpoint):
+    def get_method(self, endpoint):
         if endpoint == '':
             return 'PUT'
         else:
