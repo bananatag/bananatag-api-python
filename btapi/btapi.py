@@ -4,6 +4,7 @@
 # @author Bananatag Systems <eric@bananatag.com>
 # @version 1.0.0
 
+import urlparse
 import urllib
 import urllib2
 import httplib
@@ -29,6 +30,10 @@ class BTagAPI:
         self.access_key = access_key
         self.base_url = 'https://api.bananatag.com/'
 
+        self.last_endpoint = None
+        self.last_params = {}
+        self.next_url = None
+
     def request(self, endpoint, params=None):
         """
         Request method to be used by API library end user to make requests to Bananatag Data API
@@ -38,36 +43,44 @@ class BTagAPI:
         :return: JSON encoded response object
         """
         params = params or {}
-        self.check_data(params)
-        url = self.base_url + endpoint
-        method = self.get_method(endpoint)
-        result = self.make_request(url, method, params)
+
+        # If the current request is identical to the previous request use the next page URL
+        if endpoint == self.last_endpoint and params == self.last_params:
+            result = self.make_request(self.next_url, urlparse.urlparse(self.next_url).query)
+        else:
+            self.validate_data(params)
+            self.save_current_request(endpoint, params)
+            query_string = self.build_data_string(params)
+            url = urllib.quote(self.base_url + endpoint, ':/-') + '?' + query_string
+            result = self.make_request(url, query_string)
+
+        try:
+            self.save_response(result.get('paging'))
+        except AttributeError:
+            # No response object to save
+            pass
 
         return result
 
-    def make_request(self, url, method, params):
+    def make_request(self, url, params):
         """
         Makes request and returns JSON data
 
         :param url: URL endpoint of request
-        :param method: HTTP requests method (GET, PUT)
         :param params: Dictionary of request parameters
         :return: JSON object with request response data
         """
-        safe_url = urllib.quote(url, ':/~')
-        query_string = urllib.urlencode(params)
         request_headers = {'Authorization': base64.b64encode(self.auth_id + ':' + self.generate_signature(params))}
-
-        if method == 'GET':
-            request = urllib2.Request(safe_url + '?' + query_string, headers=request_headers)
-        else:
-            request = urllib2.Request(safe_url, query_string, headers=request_headers)
+        request = urllib2.Request(url, headers=request_headers)
 
         try:
             response = urllib2.urlopen(request)
             return json.loads(response.read())
         except (urllib2.HTTPError, urllib2.URLError, httplib.HTTPException) as e:
             raise Exception('Error: {0}'.format(e))
+        except ValueError:
+            # No more results
+            return {}
 
     @staticmethod
     def validate_date(date):
@@ -82,7 +95,7 @@ class BTagAPI:
         except ValueError:
             raise Exception('Error 400: Error with provided parameters: Date string must be in format yyyy-mm-dd.')
 
-    def check_data(self, data):
+    def validate_data(self, data):
         """
         Validate that the query parameters are within acceptable ranges
 
@@ -103,11 +116,10 @@ class BTagAPI:
         """
         Generate HMAC SHA1 signature
 
-        :param params: Dictionary of request parameters to build signature
+        :param params: URL encoded string of query parameters to build signature with
         :return: String signature
         """
-        data_string = self.build_data_string(params)
-        signature = hmac.new(self.access_key, data_string, sha1)
+        signature = hmac.new(self.access_key, params, sha1)
         return signature.hexdigest()
 
     @staticmethod
@@ -120,15 +132,20 @@ class BTagAPI:
         """
         return urllib.urlencode(params)
 
-    @staticmethod
-    def get_method(endpoint):
+    def save_current_request(self, endpoint, params):
         """
-        Get HTTP request method based on request endpoint
+        Save a representation of the request for pagination purposes
 
-        :param endpoint: HTTP request endpoint
-        :return: Request method string
+        :param endpoint: Last requested URL endpoint
+        :param params: Dictionary of parameters used in last request
         """
-        if endpoint == '':
-            return 'PUT'
-        else:
-            return 'GET'
+        self.last_endpoint = endpoint
+        self.last_params = params
+
+    def save_response(self, data):
+        """
+        Save pagination details from response object
+
+        :param data: Paging data returned from current request
+        """
+        self.next_url = data.get('nextURL')
