@@ -7,7 +7,7 @@ setup(
     author = 'Eric Wein',
     author_email = 'eric@bananatag.com',
     url = 'https://github.com/bananatag/bananatag-api-python',
-    download_url = 'https://github.com/bananatag/bananatag-api-python/tarball/1.0',
+    download_url = 'https://github.com/bananatag/bananatag-api-python/tarball/0.1',
     keywords = ['Python', 'Bananatag', 'API', 'library', 'email', 'tracking', 'data'],
     classifiers = [
         'Environment :: Web Environment',
