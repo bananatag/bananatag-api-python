@@ -2,7 +2,7 @@
 # Bananatag Public API Python Library
 #
 # @author Bananatag Systems <eric@bananatag.com>
-# @version 0.1
+# @version v0.1
 
 import urlparse
 import urllib
