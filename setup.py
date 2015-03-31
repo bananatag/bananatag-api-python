@@ -2,7 +2,7 @@ from distutils.core import setup
 setup(
     name = 'bananatag-api',
     packages = ['btapi'],
-    version = '0.1',
+    version = '0.1.0',
     description = 'The Bananatag API Python Library is used in conjunction with Bananatag\'s REST API. The Bananatag REST API allows users access to all data associated with their account and sub-accounts.',
     author = 'Eric Wein',
     author_email = 'eric@bananatag.com',
